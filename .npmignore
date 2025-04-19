@@ -1,0 +1,50 @@
+# Source code and development files
+src/
+public/
+node_modules/
+tests/
+__tests__/
+coverage/
+
+# Build configuration and tools
+webpack.config.js
+.babelrc
+.eslintrc
+.eslintignore
+.prettierrc
+.prettierignore
+tsconfig.json
+rollup.config.js
+
+# Lock files
+yarn.lock
+package-lock.json
+
+# Git and GitHub files
+.git
+.gitignore
+.github/
+
+# IDE and editor configurations
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary and cache files
+*.log
+*.cache
+.DS_Store
+dist/*.map
+
+# Demo and test assets
+public/sample.pdf
+example/
+demo/
+
+# Other miscellaneous files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
