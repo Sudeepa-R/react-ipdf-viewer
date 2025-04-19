@@ -50,7 +50,9 @@
     "media-renderer",
     "html5-media",
     "blob-url",
-    "media-preview"
+    "media-preview",
+    "react-ipdf-viewer",
+    "react-pdf-viewer"
   ],
   "author": "Sudeepa R",
   "license": "MIT",
