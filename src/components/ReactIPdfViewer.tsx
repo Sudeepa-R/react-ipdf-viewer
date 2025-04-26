@@ -25,7 +25,7 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
   allowRotate = true,
   allowFullScreen = true,
   theme = "light",
-  rotateValue=0,
+  rotateValue = 0,
   autoHeight = true,
   className,
   style,
@@ -40,19 +40,34 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
     defaultZoom,
     () => {
       if (typeof src === "string") {
+        // Ensure the src is a valid URL and that it's handled properly
         const link = document.createElement("a");
         link.href = src;
         link.download = fileName || "download";
+
+        // Trigger the click event in a user-interaction context (e.g., click handler)
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       } else {
+        // If `src` is a Blob or Media source
         const url =
           mediaUrl ||
           createObjectURL(src, mimeType || "application/octet-stream");
+
         const link = document.createElement("a");
         link.href = url;
         link.download = fileName || "download";
+
+        // For Blobs, ensure the URL is created properly and that the MIME type is appropriate
+        if (url.startsWith("blob:")) {
+          // Ensure Blob URL is revoked after download to avoid memory leaks
+          link.addEventListener("click", () => {
+            URL.revokeObjectURL(url);
+          });
+        }
+
+        // Trigger the click event for download (in a user interaction context)
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -60,7 +75,6 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
     },
     theme,
     () => {
-      // 1. Convert Blob/File to object URL if needed
       const fileUrl =
         typeof src === "string"
           ? src
@@ -72,7 +86,6 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
                   })
             );
 
-      // 2. Create a hidden iframe or embed element
       const printFrame = document.createElement("iframe");
       printFrame.style.position = "fixed";
       printFrame.style.right = "0";
@@ -80,38 +93,55 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
       printFrame.style.width = "0";
       printFrame.style.height = "0";
       printFrame.style.border = "0";
+      printFrame.style.visibility = "hidden";
 
-      // 3. Handle PDFs (embed) or images (img)
+      document.body.appendChild(printFrame);
+
       const isPDF = fileUrl.includes(".pdf") || mimeType === "application/pdf";
 
       if (isPDF) {
+        printFrame.onload = () => {
+          try {
+            printFrame.contentWindow?.focus();
+            printFrame.contentWindow?.print();
+          } catch (err) {
+            console.error("Print error:", err);
+          } finally {
+            setTimeout(() => {
+              document.body.removeChild(printFrame);
+              if (typeof src !== "string") URL.revokeObjectURL(fileUrl);
+            }, 1000);
+          }
+        };
+
+        // ✅ Set src directly for PDFs — no srcdoc
         printFrame.src = `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
       } else {
-        printFrame.srcdoc = `
-      <!DOCTYPE html>
-      <html>
-        <head><title>Print</title></head>
-        <body style="margin: 0;">
-          <img src="${fileUrl}" style="max-width: 100%;" onload="window.print()" />
-        </body>
-      </html>
-    `;
-      }
-
-      // 4. Trigger print when content loads
-      printFrame.onload = () => {
-        setTimeout(() => {
-          printFrame.contentWindow?.print();
-          // Cleanup after printing
+        // For images and other types
+        printFrame.onload = () => {
           setTimeout(() => {
-            document.body.removeChild(printFrame);
-            if (typeof src !== "string") URL.revokeObjectURL(fileUrl);
-          }, 1000);
-        }, 500); // Delay for PDF rendering
-      };
+            printFrame.contentWindow?.focus();
+            printFrame.contentWindow?.print();
+            setTimeout(() => {
+              document.body.removeChild(printFrame);
+              if (typeof src !== "string") URL.revokeObjectURL(fileUrl);
+            }, 1000);
+          }, 500);
+        };
 
-      document.body.appendChild(printFrame);
+        // ✅ srcdoc is fine for images
+        printFrame.srcdoc = `
+          <!DOCTYPE html>
+          <html>
+            <head><title>Print</title></head>
+            <body style="margin: 0;">
+              <img src="${fileUrl}" style="max-width: 100%;" onload="window.print()" />
+            </body>
+          </html>
+        `;
+      }
     },
+
     rotateValue
   );
 
@@ -229,8 +259,8 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
       style={{
         display: "flex",
         flexDirection: "column",
-        // width: "100%"  ,
-        width: "60%",
+        width: "100%",
+        // width: "60%",
         height: containerHeight,
         ...themeStyles[controls.currentTheme],
         ...style,

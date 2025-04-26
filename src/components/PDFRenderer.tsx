@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { Spin } from "antd";
-import { MediaRenderProps } from "../types";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
@@ -16,51 +15,73 @@ interface PDFRendererProps {
 const PDFRenderer: React.FC<PDFRendererProps> = ({
   fileUrl,
   zoom = 1.5,
-  rotation,
+  rotation = 0,
   onError,
 }) => {
   const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const canvasRefs = useRef<Array<React.RefObject<HTMLCanvasElement>>>([]);
 
+  // Load PDF and create canvas refs
   useEffect(() => {
     const loadPdf = async () => {
-      const loadingTask = pdfjsLib.getDocument(fileUrl);
-      const loadedPdf = await loadingTask.promise;
-      setPdf(loadedPdf);
-      renderAllPages(loadedPdf);
+      try {
+        const loadingTask = pdfjsLib.getDocument(fileUrl);
+        const loadedPdf = await loadingTask.promise;
+        setPdf(loadedPdf);
+
+        // Prepare canvas refs based on number of pages
+        canvasRefs.current = Array(loadedPdf.numPages)
+          .fill(null)
+          .map(() => React.createRef<HTMLCanvasElement>());
+      } catch (err) {
+        if (onError && err instanceof Error) {
+          onError(err);
+        }
+      }
     };
 
     loadPdf();
-  }, [fileUrl]);
+  }, [fileUrl, onError]);
 
-  const renderAllPages = async (loadedPdf: pdfjsLib.PDFDocumentProxy) => {
-    const numPages = loadedPdf.numPages;
-    canvasRefs.current = Array(numPages)
-      .fill(null)
-      .map(() => React.createRef<HTMLCanvasElement>());
+  // Render pages after canvases are mounted
+  useEffect(() => {
+    const renderAllPages = async () => {
+      if (!pdf || canvasRefs.current.length === 0) return;
 
-    for (let pageNumber = 1; pageNumber <= numPages; pageNumber++) {
-      const page = await loadedPdf.getPage(pageNumber);
-      const canvasRef = canvasRefs.current[pageNumber - 1];
-      const canvas = canvasRef.current;
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        try {
+          const page = await pdf.getPage(pageNumber);
+          const canvas = canvasRefs.current[pageNumber - 1].current;
 
-      if (!canvas) continue;
+          if (!canvas) continue;
 
-      const context = canvas.getContext("2d");
-      if (!context) continue;
+          const context = canvas.getContext("2d");
+          if (!context) continue;
 
-      const viewport = page.getViewport({ scale: 1.5 });
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+          // Important: rotation is passed here
+          const viewport = page.getViewport({ scale: 1.5 });
 
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport,
-      };
+          // Resize the canvas to match the page size
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
 
-      await page.render(renderContext).promise;
-    }
-  };
+          // Clear previous drawings
+          context.clearRect(0, 0, canvas.width, canvas.height);
+
+          await page.render({
+            canvasContext: context,
+            viewport: viewport,
+          }).promise;
+        } catch (err) {
+          if (onError && err instanceof Error) {
+            onError(err);
+          }
+        }
+      }
+    };
+
+    renderAllPages();
+  }, [pdf, zoom, rotation, onError]);
 
   return (
     <div
@@ -71,8 +92,6 @@ const PDFRenderer: React.FC<PDFRendererProps> = ({
         width: "80%",
         height: "100%",
         justifyContent: "center",
-        transform: `scale(${zoom})`,
-        transformOrigin: "left top",
         transition: "transform 0.5s ease",
       }}
     >
@@ -81,9 +100,6 @@ const PDFRenderer: React.FC<PDFRendererProps> = ({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          // transform: `rotate(${rotation}deg)`,
-          // transition: "transform 0.5s ease",
-
           width: "100%",
           height: "100%",
         }}
@@ -92,12 +108,12 @@ const PDFRenderer: React.FC<PDFRendererProps> = ({
           style={{
             width: "100%",
             height: "100vh",
-            // overflowY: "auto",
             marginTop: "5px",
             marginBottom: "10px",
+            overflow: "auto",
           }}
         >
-          {pdf &&
+          {pdf ? (
             Array.from({ length: pdf.numPages }, (_, index) => (
               <canvas
                 key={index}
@@ -106,12 +122,10 @@ const PDFRenderer: React.FC<PDFRendererProps> = ({
                   width: "100%",
                   marginBottom: "10px",
                   border: "1px solid #ccc",
-                  transform: ` rotate(${rotation}deg)`,
-                  transition: "transform 0.5s ease",
                 }}
               />
-            ))}
-          {!pdf && (
+            ))
+          ) : (
             <div style={{ textAlign: "center", marginTop: "50px" }}>
               <Spin size="large" tip="Loading PDF..." />
             </div>
