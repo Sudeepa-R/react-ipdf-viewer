@@ -40,17 +40,11 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
     defaultZoom,
     () => {
       if (typeof src === "string") {
-        // Ensure the src is a valid URL and that it's handled properly
         const link = document.createElement("a");
         link.href = src;
         link.download = fileName || "download";
-
-        // Trigger the click event in a user-interaction context (e.g., click handler)
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
       } else {
-        // If `src` is a Blob or Media source
         const url =
           mediaUrl ||
           createObjectURL(src, mimeType || "application/octet-stream");
@@ -59,7 +53,6 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
         link.href = url;
         link.download = fileName || "download";
 
-        // For Blobs, ensure the URL is created properly and that the MIME type is appropriate
         if (url.startsWith("blob:")) {
           // Ensure Blob URL is revoked after download to avoid memory leaks
           link.addEventListener("click", () => {
@@ -67,80 +60,142 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
           });
         }
 
-        // Trigger the click event for download (in a user interaction context)
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
       }
     },
     theme,
+    // () => {
+    //   const fileUrl =
+    //     typeof src === "string"
+    //       ? src
+    //       : URL.createObjectURL(
+    //           src instanceof Blob
+    //             ? src
+    //             : new Blob([src], {
+    //                 type: mimeType || "application/octet-stream",
+    //               })
+    //         );
+
+    //   const printFrame = document.createElement("iframe");
+    //   printFrame.style.position = "fixed";
+    //   printFrame.style.right = "0";
+    //   printFrame.style.bottom = "0";
+    //   printFrame.style.width = "0";
+    //   printFrame.style.height = "0";
+    //   printFrame.style.border = "0";
+    //   printFrame.style.visibility = "hidden";
+
+    //   document.body.appendChild(printFrame);
+
+    //   const isPDF = fileUrl.includes(".pdf") || mimeType === "application/pdf";
+
+    //   if (isPDF) {
+    //     printFrame.onload = () => {
+    //       try {
+    //         printFrame.contentWindow?.focus();
+    //         printFrame.contentWindow?.print();
+    //       } catch (err) {
+    //         console.error("Print error:", err);
+    //       } finally {
+    //         setTimeout(() => {
+    //           document.body.removeChild(printFrame);
+    //           if (typeof src !== "string") URL.revokeObjectURL(fileUrl);
+    //         }, 1000);
+    //       }
+    //     };
+
+    //     // ✅ Set src directly for PDFs — no srcdoc
+    //     printFrame.src = `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
+    //   } else {
+    //     // For images and other types
+    //     printFrame.onload = () => {
+    //       setTimeout(() => {
+    //         printFrame.contentWindow?.focus();
+    //         printFrame.contentWindow?.print();
+    //         setTimeout(() => {
+    //           document.body.removeChild(printFrame);
+    //           if (typeof src !== "string") URL.revokeObjectURL(fileUrl);
+    //         }, 1000);
+    //       }, 500);
+    //     };
+
+    //     // ✅ srcdoc is fine for images
+    //     printFrame.srcdoc = `
+    //       <!DOCTYPE html>
+    //       <html>
+    //         <head><title>Print</title></head>
+    //         <body style="margin: 0;">
+    //           <img src="${fileUrl}" style="max-width: 100%;" onload="window.print()" />
+    //         </body>
+    //       </html>
+    //     `;
+    //   }
+    // },
+    // () => {
+    //   const fileUrl =
+    //     typeof src === "string"
+    //       ? src
+    //       : URL.createObjectURL(
+    //           new Blob([src], { type: mimeType || "application/octet-stream" })
+    //         );
+
+    //   const frame = document.createElement("iframe");
+    //   frame.style.display = "none";
+    //   document.body.appendChild(frame);
+
+    //   const cleanUp = () => {
+    //     document.body.removeChild(frame);
+    //     if (typeof src !== "string") URL.revokeObjectURL(fileUrl);
+    //   };
+
+    //   const isPDF = fileUrl.includes(".pdf") || mimeType === "application/pdf";
+
+    //   frame.onload = () => {
+    //     frame.contentWindow?.focus();
+    //     frame.contentWindow?.print();
+    //     setTimeout(cleanUp, 1000);
+    //   };
+
+    //   frame.src = isPDF
+    //     ? `${fileUrl}#toolbar=0`
+    //     : `data:text/html,
+    //       <html>
+    //         <body style="margin:0">
+    //           <img src='${fileUrl}' style='width:100%' onload='window.print()' />
+    //         </body>
+    //       </html>`;
+    // },
     () => {
-      const fileUrl =
-        typeof src === "string"
-          ? src
-          : URL.createObjectURL(
-              src instanceof Blob
-                ? src
-                : new Blob([src], {
-                    type: mimeType || "application/octet-stream",
-                  })
-            );
-
-      const printFrame = document.createElement("iframe");
-      printFrame.style.position = "fixed";
-      printFrame.style.right = "0";
-      printFrame.style.bottom = "0";
-      printFrame.style.width = "0";
-      printFrame.style.height = "0";
-      printFrame.style.border = "0";
-      printFrame.style.visibility = "hidden";
-
-      document.body.appendChild(printFrame);
-
+      const fileUrl = typeof src === "string"
+        ? src
+        : URL.createObjectURL(new Blob([src], { type: mimeType || "application/octet-stream" }));
+    
+      const frame = document.createElement("iframe");
+      frame.style.display = "none";
+      document.body.appendChild(frame);
+    
       const isPDF = fileUrl.includes(".pdf") || mimeType === "application/pdf";
-
-      if (isPDF) {
-        printFrame.onload = () => {
-          try {
-            printFrame.contentWindow?.focus();
-            printFrame.contentWindow?.print();
-          } catch (err) {
-            console.error("Print error:", err);
-          } finally {
-            setTimeout(() => {
-              document.body.removeChild(printFrame);
-              if (typeof src !== "string") URL.revokeObjectURL(fileUrl);
-            }, 1000);
-          }
-        };
-
-        // ✅ Set src directly for PDFs — no srcdoc
-        printFrame.src = `${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`;
-      } else {
-        // For images and other types
-        printFrame.onload = () => {
-          setTimeout(() => {
-            printFrame.contentWindow?.focus();
-            printFrame.contentWindow?.print();
-            setTimeout(() => {
-              document.body.removeChild(printFrame);
-              if (typeof src !== "string") URL.revokeObjectURL(fileUrl);
-            }, 1000);
-          }, 500);
-        };
-
-        // ✅ srcdoc is fine for images
-        printFrame.srcdoc = `
-          <!DOCTYPE html>
+    
+      frame.src = isPDF
+        ? `${fileUrl}#toolbar=0`
+        : `data:text/html,
           <html>
-            <head><title>Print</title></head>
-            <body style="margin: 0;">
-              <img src="${fileUrl}" style="max-width: 100%;" onload="window.print()" />
+            <body style="margin:0">
+              <img src='${fileUrl}' style='width:100%'>
             </body>
-          </html>
-        `;
-      }
+          </html>`;
+    
+      // Wait a little bit for iframe to load, then print directly
+      setTimeout(() => {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+        setTimeout(() => {
+          document.body.removeChild(frame);
+          if (typeof src !== "string") URL.revokeObjectURL(fileUrl);
+        }, 1000);
+      }, 500); // wait 0.5 sec to let iframe load
     },
+    
 
     rotateValue
   );
