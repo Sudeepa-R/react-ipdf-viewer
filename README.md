@@ -78,6 +78,35 @@ const App = () => {
 export default App;
 ```
 
+### Example: Viewing an Image
+
+```jsx
+import React from 'react';
+import ReactIPdfViewer from 'react-ipdf-viewer';
+import './App.css';
+
+const sampleImage = 'sample.jpg';
+
+const App = () => {
+  return (
+    <div className="App">
+      <ReactIPdfViewer
+        src={sampleImage}
+        theme="dark"
+        autoHeight
+        showControls
+        allowDownload
+        allowPrint
+        allowRotate
+        allowFullScreen
+      />
+    </div>
+  );
+};
+
+export default App;
+```
+
 ### Alternative Example: Minimal PDF Viewer
 
 ```jsx
