@@ -314,7 +314,7 @@ export const ReactIPdfViewer: React.FC<NexusViewerProps> = ({
       style={{
         display: "flex",
         flexDirection: "column",
-        width: "100%",
+        width: "80%",
         // width: "60%",
         height: containerHeight,
         ...themeStyles[controls.currentTheme],

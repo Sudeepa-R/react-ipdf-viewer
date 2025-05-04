@@ -89,9 +89,11 @@ const PDFRenderer: React.FC<PDFRendererProps> = ({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        width: "80%",
+        width: "50%",
         height: "100%",
         justifyContent: "center",
+        transform: `scale(${zoom})`,
+        transformOrigin: "left top",
         transition: "transform 0.5s ease",
       }}
     >
@@ -122,6 +124,8 @@ const PDFRenderer: React.FC<PDFRendererProps> = ({
                   width: "100%",
                   marginBottom: "10px",
                   border: "1px solid #ccc",
+                  transform: ` rotate(${rotation}deg)`,
+                  transition: "transform 0.5s ease",
                 }}
               />
             ))
