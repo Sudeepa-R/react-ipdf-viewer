@@ -1,6 +1,6 @@
 {
-  "name": "react-ipdf-viewer-lite",
-  "version": "1.0.0",
+  "name": "react-ipdf-viewer",
+  "version": "1.1.7",
   "description": "A lightweight, dependency-free media viewer for PDFs and other media types with advanced controls",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,12 +18,12 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/Sudeepa-R/react-ipdf-viewer.git"
   },
   "bugs": {
-    "url": ""
+    "url": "https://github.com/Sudeepa-R/react-ipdf-viewer/issues"
   },
-  "homepage": "",
+  "homepage": "https://github.com/Sudeepa-R/react-ipdf-viewer#readme",
   "keywords": [
     "pdf",
     "viewer",
